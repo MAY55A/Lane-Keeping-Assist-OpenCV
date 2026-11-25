@@ -2,7 +2,7 @@
 
 A small Python program that finds the lane lines in a driving video, colours the lane and shows how far the car is from the lane centre.
 
-![Example output](images/final.png)
+![Example output](Images/final.png)
 
 ## What it does
 
@@ -28,7 +28,7 @@ For every frame:
 10. Shorten the lines if they get closer than a minimum gap.
 11. Colour the lane and calculate the offset.
 
-A longer explanation with an image for every step is in [`docs/Lane_Keeping_Assist_Guide.pdf`](docs/Lane_Keeping_Assist_Guide.pdf).
+A longer explanation with an image for every step is in [`docs/Lane_Keeping_Assist_Guide.pdf`](Docs/Lane_Keeping_Assist_Guide.pdf).
 
 ## Requirements
 
