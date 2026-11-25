@@ -2,10 +2,10 @@ import sys
 import cv2
 import numpy as np
 
-WIDTH = 800   # display width in pixels; lower it if the window is still too big
+WIDTH = 800   # display width in pixels
 SMOOTH = 0.8        # 0 = trust only the new frame, closer to 1 = trust the old line more
-MAX_MISSED = 30     # how many frames to keep a lane after it was last seen
-MIN_GAP = 20        # minimum pixels between the two lane lines at the top (stops them crossing)
+MAX_MISSED = 25     # how many frames to keep a lane after it was last seen
+MIN_GAP = 40        # minimum pixels between the two lane lines at the top (stops them crossing)
 
 last = {"left": None, "right": None}     # last known line for each side
 missed = {"left": 0, "right": 0}         # frames since each side was last seen
@@ -56,21 +56,21 @@ def process(frame):
             (left if slope < 0 else right).append((x1, y1, x2, y2))
 
     # 7. One averaged straight line per side, with memory.
-    y_bottom, y_top = h, int(h * 0.65)
+    y_bottom, y_top = h, int(h * 0.6)
     for name, side in (("left", left), ("right", right)):
         if side:                                   # lane seen in this frame
             new = np.array(lane_points(side, y_bottom, y_top), float)
             old = last[name]
-            # Smoothing: mostly keep the old line, nudge it toward the new one (less jitter).
+            # Smoothing: mostly keep the old line, move it a bit toward the new one.
             last[name] = new if old is None else SMOOTH * old + (1 - SMOOTH) * new
             missed[name] = 0
-        else:                                      # lane NOT seen (e.g. gap in a dashed line)
+        else:                                      # lane not seen (ex: gap in a dashed line)
             missed[name] += 1
             if missed[name] > MAX_MISSED:          # gone for too long: forget it
                 last[name] = None
     lanes = [last[n].astype(int) for n in ("left", "right") if last[n] is not None]
 
-    # 7b. Stop the two lines from touching/crossing where they converge (narrow views).
+    # 8. Stop the two lines from touching/crossing where they converge (narrow views).
     #     If the gap between them at the top is smaller than MIN_GAP, shorten both lines
     #     to the height where the gap is exactly MIN_GAP.
     if len(lanes) == 2:
@@ -84,7 +84,7 @@ def process(frame):
             lanes = [np.array([lx1, ly1, int(lx1 + t * (lx2 - lx1)), new_y]),
                      np.array([rx1, ry1, int(rx1 + t * (rx2 - rx1)), new_y])]
 
-    # 8. Colour the space between the lanes (only if both lanes were found).
+    # 9. Colour the space between the lanes (only if both lanes were found).
     if len(lanes) == 2:
         (lx1, ly1, lx2, ly2), (rx1, ry1, rx2, ry2) = lanes
         overlay = frame.copy()
@@ -95,7 +95,7 @@ def process(frame):
     for x1, y1, x2, y2 in lanes:
         cv2.line(frame, (x1, y1), (x2, y2), (0, 255, 0), 6)
 
-    # 9. Offset as a % of the lane width, measured at the MIDDLE of each lane line
+    # 10. Offset as a % of the lane width, measured at the MIDDLE of each lane line
     #    (the midpoint of a segment is halfway between its bottom and top end point).
     if len(lanes) == 2:
         left_x = (lanes[0][0] + lanes[0][2]) / 2
